@@ -39,6 +39,7 @@ export class ProductosService {
     const productoNormalizado: CreateProductoCompletoInput = {
       ...parsedData,
       nombre: parsedData.nombre.trim(),
+      proveedor: parsedData.proveedor ? parsedData.proveedor.trim() : null,
       sku: parsedData.sku ? parsedData.sku.trim().toUpperCase() : undefined,
       variantes: variantesNormalizadas as unknown as CreateVarianteInput[],
     };
@@ -49,11 +50,15 @@ export class ProductosService {
 
       const sku = productoNormalizado.sku || ProductosService.generarSkuBase(productoNormalizado.nombre);
       const productoQuery = `
-        INSERT INTO productos_maestros (sku, nombre)
-        VALUES ($1, $2)
+        INSERT INTO productos_maestros (sku, nombre, proveedor)
+        VALUES ($1, $2, $3)
         RETURNING id_producto_maestro, sku, nombre, proveedor, created_at;
       `;
-      const { rows: productoRows } = await client.query(productoQuery, [sku, productoNormalizado.nombre]);
+      const { rows: productoRows } = await client.query(productoQuery, [
+        sku,
+        productoNormalizado.nombre,
+        productoNormalizado.proveedor ?? null,
+      ]);
       const producto: ProductoMaestro = productoRows[0];
 
       const variantes: Variante[] = [];
@@ -146,13 +151,7 @@ export class ProductosService {
     const { rows } = await db.query(productosQuery);
     const productos = ProductosRepository.agruparProductosConVariantes(rows);
 
-    return {
-      productos,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return { productos, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   static async getProductoById(id: number): Promise<ProductoConVariantes> {
@@ -178,6 +177,10 @@ export class ProductosService {
       if (updateData.nombre.length < 2) {
         throw new ValidationError('El nombre debe tener al menos 2 caracteres');
       }
+    }
+
+    if (updateData.proveedor !== undefined && updateData.proveedor !== null) {
+      updateData.proveedor = updateData.proveedor.trim() || null;
     }
 
     return await ProductosRepository.update(id, updateData);

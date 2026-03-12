@@ -74,6 +74,10 @@ export class ProductosRepository {
       campos.push(`sku = $${paramIndex++}`);
       valores.push(data.sku);
     }
+    if (data.proveedor !== undefined) {
+      campos.push(`proveedor = $${paramIndex++}`);
+      valores.push(data.proveedor);
+    }
 
     if (campos.length === 0) {
       throw new ValidationError('No se proporcionaron campos para actualizar');

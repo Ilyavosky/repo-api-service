@@ -20,11 +20,13 @@ export interface CreateProductoInput {
 export interface UpdateProductoInput {
   sku?: string;
   nombre?: string;
+  proveedor?: string | null;
 }
 
 export interface CreateProductoCompletoInput {
   sku?: string;
   nombre: string;
+  proveedor?: string | null;
   variantes?: CreateVarianteInput[];
 }
 
